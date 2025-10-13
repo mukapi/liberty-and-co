@@ -5,7 +5,7 @@ window.Webflow ||= [];
 window.Webflow.push(() => {
   const name = 'Liberty & Co';
   greetUser(name);
-  
+
   // Initialiser les animations
   initScrollAnimations();
 });

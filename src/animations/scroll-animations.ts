@@ -192,7 +192,7 @@ export function initScrollAnimations() {
   } else if (!methodList) {
     console.error('❌ No method_list element found');
   }
-};
+}
 
 /**
  * Rafraîchit ScrollTrigger (utile après un changement de DOM)
