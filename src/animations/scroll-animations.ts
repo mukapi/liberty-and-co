@@ -17,12 +17,9 @@ export const initScrollAnimations = () => {
 
   // Protection contre le double chargement
   if (isInitialized) {
-    console.log('⚠️ Scroll animations already initialized, skipping...');
     return;
   }
   isInitialized = true;
-
-  console.log('🚀 Initializing scroll animations...');
   // Animation fade-in depuis le bas
   gsap.utils.toArray<HTMLElement>('[data-animate="fade-up"]').forEach((element) => {
     gsap.from(element, {
@@ -124,58 +121,76 @@ export const initScrollAnimations = () => {
 
   if (methodList && methodItems.length > 0 && !methodList.dataset.initialized) {
     methodList.dataset.initialized = 'true';
-    console.log(`🎯 Found ${methodItems.length} method items`);
 
     // 1. Tous cachés au départ sauf le premier
     gsap.set(methodItems, { opacity: 0 });
     gsap.set(methodItems[0], { opacity: 1 });
 
-    // 2. Animation fluide avec scrub - UN SEUL trigger pour tout gérer
+    // Variable pour tracker l'étape précédente
+    let previousActiveIndex = 0;
+
+    // 2. Animation optimisée pour position sticky
     ScrollTrigger.create({
       trigger: methodList,
       start: 'top center',
       end: 'bottom center',
-      scrub: true,
+      scrub: 0.1, // Léger scrub pour plus de fluidité
       onUpdate: (self) => {
-        const progress = self.progress; // 0 à 1
+        const { progress } = self; // 0 à 1
         const totalItems = methodItems.length;
 
-        // Calculer quelle étape doit être visible
-        const currentStep = Math.floor(progress * totalItems);
-        const activeIndex = Math.min(currentStep, totalItems - 1);
+        // Calcul plus précis avec segments
+        const segmentSize = 1 / totalItems;
+        const currentSegment = Math.floor(progress / segmentSize);
+        const activeIndex = Math.min(currentSegment, totalItems - 1);
 
-        console.log(
-          `📍 Progress: ${(progress * 100).toFixed(1)}% | Étape active: ${activeIndex + 1}/${totalItems}`
-        );
+        // Transition seulement lors du changement d'étape
+        if (activeIndex !== previousActiveIndex) {
+          // Timeline pour transition synchronisée
+          const tl = gsap.timeline();
 
-        // Animation fluide sans chevauchement - utilisation de display
-        methodItems.forEach((item, index) => {
-          if (index === activeIndex) {
-            // Afficher l'item actif avec animation
-            gsap.set(item, { display: 'block' });
-            gsap.fromTo(item, 
-              { opacity: 0, y: 20 },
-              { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }
+          // 1. Masquer instantanément l'ancien item
+          if (previousActiveIndex >= 0 && methodItems[previousActiveIndex]) {
+            tl.set(
+              methodItems[previousActiveIndex],
+              {
+                opacity: 0,
+                visibility: 'hidden',
+              },
+              0
             );
-          } else {
-            // Cacher complètement les autres items
-            gsap.set(item, { 
-              opacity: 0, 
-              display: 'none',
-              y: 0 
-            });
           }
-        });
+
+          // 2. Préparer le nouvel item
+          tl.set(
+            methodItems[activeIndex],
+            {
+              visibility: 'visible',
+              opacity: 0,
+            },
+            0
+          );
+
+          // 3. Afficher avec animation rapide
+          tl.to(
+            methodItems[activeIndex],
+            {
+              opacity: 1,
+              duration: 0.2,
+              ease: 'power1.out',
+            },
+            0.05
+          );
+
+          previousActiveIndex = activeIndex;
+        }
       },
-      markers: true,
+      // Pas de markers en production
+      // markers: true,
     });
-
-    console.log('✅ Method items scroll setup complete');
-  } else {
-    console.log('❌ No method_list or method_items found');
+  } else if (!methodList) {
+    console.error('❌ No method_list element found');
   }
-
-  console.log('✅ GSAP ScrollTrigger animations initialized');
 };
 
 /**
