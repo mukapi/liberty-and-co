@@ -130,42 +130,44 @@ export const initScrollAnimations = () => {
     gsap.set(methodItems, { opacity: 0 });
     gsap.set(methodItems[0], { opacity: 1 });
 
-    // 2. Créer un trigger pour CHAQUE étape (bien distribué sur 300vh)
-    // Distribution équitable : chaque étape a ~75vh de zone
-    methodItems.forEach((item, index) => {
-      if (index === 0) return; // Le premier est déjà visible
+    // 2. Animation fluide avec scrub - UN SEUL trigger pour tout gérer
+    ScrollTrigger.create({
+      trigger: methodList,
+      start: 'top center',
+      end: 'bottom center',
+      scrub: true,
+      onUpdate: (self) => {
+        const progress = self.progress; // 0 à 1
+        const totalItems = methodItems.length;
 
-      // Distribution sur 300vh : zones de 75vh chacune
-      const zoneSize = 75; // vh par étape
-      const zoneStart = index * zoneSize; // 0vh, 75vh, 150vh, 225vh
-      const zoneEnd = zoneStart + zoneSize; // 75vh, 150vh, 225vh, 300vh
+        // Calculer quelle étape doit être visible
+        const currentStep = Math.floor(progress * totalItems);
+        const activeIndex = Math.min(currentStep, totalItems - 1);
 
-      ScrollTrigger.create({
-        trigger: methodList,
-        start: `top+=${zoneStart}vh center`,
-        end: `top+=${zoneEnd}vh center`,
-        onEnter: () => {
-          console.log(
-            `✅ ÉTAPE ${index + 1}/${methodItems.length} ACTIVE (zone: ${zoneStart}vh-${zoneEnd}vh)`
-          );
-          gsap.to(methodItems, { opacity: 0, duration: 0.3 });
-          gsap.to(item, { opacity: 1, duration: 0.3 });
-        },
-        onEnterBack: () => {
-          console.log(`⬅️ ÉTAPE ${index + 1}/${methodItems.length} ACTIVE (retour)`);
-          gsap.to(methodItems, { opacity: 0, duration: 0.3 });
-          gsap.to(item, { opacity: 1, duration: 0.3 });
-        },
-        onLeaveBack: () => {
-          if (index === 1) {
-            // Si on retourne avant l'étape 2, montrer l'étape 1
-            console.log(`⬅️ Retour à ÉTAPE 1`);
-            gsap.to(methodItems, { opacity: 0, duration: 0.3 });
-            gsap.to(methodItems[0], { opacity: 1, duration: 0.3 });
+        console.log(
+          `📍 Progress: ${(progress * 100).toFixed(1)}% | Étape active: ${activeIndex + 1}/${totalItems}`
+        );
+
+        // Animation fluide sans chevauchement - utilisation de display
+        methodItems.forEach((item, index) => {
+          if (index === activeIndex) {
+            // Afficher l'item actif avec animation
+            gsap.set(item, { display: 'block' });
+            gsap.fromTo(item, 
+              { opacity: 0, y: 20 },
+              { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }
+            );
+          } else {
+            // Cacher complètement les autres items
+            gsap.set(item, { 
+              opacity: 0, 
+              display: 'none',
+              y: 0 
+            });
           }
-        },
-        markers: true,
-      });
+        });
+      },
+      markers: true,
     });
 
     console.log('✅ Method items scroll setup complete');
