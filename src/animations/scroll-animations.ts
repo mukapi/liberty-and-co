@@ -21,6 +21,8 @@ export const initScrollAnimations = () => {
     return;
   }
   isInitialized = true;
+
+  console.log('🚀 Initializing scroll animations...');
   // Animation fade-in depuis le bas
   gsap.utils.toArray<HTMLElement>('[data-animate="fade-up"]').forEach((element) => {
     gsap.from(element, {
@@ -116,60 +118,59 @@ export const initScrollAnimations = () => {
     });
   });
 
-  // --- Animation method_item (snap points discrets) ---
+  // --- Animation method_item (étapes qui apparaissent 1 par 1) ---
   const methodList = document.querySelector<HTMLElement>('.method_list');
   const methodItems = gsap.utils.toArray<HTMLElement>('.method_item');
 
-  // Protection contre le double chargement
   if (methodList && methodItems.length > 0 && !methodList.dataset.initialized) {
     methodList.dataset.initialized = 'true';
     console.log(`🎯 Found ${methodItems.length} method items`);
-    console.log('🔍 Method list element:', methodList);
-    console.log('🔍 Method items:', methodItems);
 
-    // 1. Initialiser : tous les items cachés sauf le premier
+    // 1. Tous cachés au départ sauf le premier
     gsap.set(methodItems, { opacity: 0 });
     gsap.set(methodItems[0], { opacity: 1 });
-    console.log('✅ Initial setup: Item 1 visible, others hidden');
 
-    // 2. Créer des snap points discrets (pas de transitions fluides)
-    methodItems.forEach((item, i) => {
-      console.log(`🔧 Creating ScrollTrigger for item ${i + 1}`);
+    // 2. Créer un trigger pour CHAQUE étape (bien distribué sur 300vh)
+    // Distribution équitable : chaque étape a ~75vh de zone
+    methodItems.forEach((item, index) => {
+      if (index === 0) return; // Le premier est déjà visible
 
-      // Créer un ScrollTrigger pour chaque item avec des zones fixes
+      // Distribution sur 300vh : zones de 75vh chacune
+      const zoneSize = 75; // vh par étape
+      const zoneStart = index * zoneSize; // 0vh, 75vh, 150vh, 225vh
+      const zoneEnd = zoneStart + zoneSize; // 75vh, 150vh, 225vh, 300vh
+
       ScrollTrigger.create({
         trigger: methodList,
-        start: `top ${i * 25}%`, // Zone fixe pour chaque item
-        end: `top ${(i + 1) * 25}%`, // Zone fixe pour chaque item
+        start: `top+=${zoneStart}vh center`,
+        end: `top+=${zoneEnd}vh center`,
         onEnter: () => {
-          console.log(`🚀 ENTERING item ${i + 1} zone (${i * 25}% to ${(i + 1) * 25}%)`);
-          console.log('🔍 Current scroll position:', window.scrollY);
-          console.log('🔍 Method list position:', methodList.getBoundingClientRect().top);
-
-          // Quand on entre dans cette zone : montrer cet item, cacher les autres
-          gsap.set(methodItems, { opacity: 0 }); // Cacher tous
-          gsap.set(item, { opacity: 1 }); // Montrer celui-ci
-
-          console.log(`📌 Snap to item ${i + 1}`);
+          console.log(
+            `✅ ÉTAPE ${index + 1}/${methodItems.length} ACTIVE (zone: ${zoneStart}vh-${zoneEnd}vh)`
+          );
+          gsap.to(methodItems, { opacity: 0, duration: 0.3 });
+          gsap.to(item, { opacity: 1, duration: 0.3 });
         },
         onEnterBack: () => {
-          console.log(`🔄 ENTERING BACK item ${i + 1} zone`);
-
-          // Même chose quand on revient en arrière
-          gsap.set(methodItems, { opacity: 0 });
-          gsap.set(item, { opacity: 1 });
-
-          console.log(`📌 Snap back to item ${i + 1}`);
+          console.log(`⬅️ ÉTAPE ${index + 1}/${methodItems.length} ACTIVE (retour)`);
+          gsap.to(methodItems, { opacity: 0, duration: 0.3 });
+          gsap.to(item, { opacity: 1, duration: 0.3 });
         },
-        markers: false, // Désactivé pour éviter la confusion
+        onLeaveBack: () => {
+          if (index === 1) {
+            // Si on retourne avant l'étape 2, montrer l'étape 1
+            console.log(`⬅️ Retour à ÉTAPE 1`);
+            gsap.to(methodItems, { opacity: 0, duration: 0.3 });
+            gsap.to(methodItems[0], { opacity: 1, duration: 0.3 });
+          }
+        },
+        markers: true,
       });
     });
+
+    console.log('✅ Method items scroll setup complete');
   } else {
     console.log('❌ No method_list or method_items found');
-    console.log(
-      '🔍 Available elements with "method" in class:',
-      document.querySelectorAll('[class*="method"]')
-    );
   }
 
   console.log('✅ GSAP ScrollTrigger animations initialized');
