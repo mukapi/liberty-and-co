@@ -119,15 +119,17 @@ export const initScrollAnimations = () => {
   const methodList = document.querySelector<HTMLElement>('.method_list');
   const methodItems = gsap.utils.toArray<HTMLElement>('.method_item');
 
-  if (methodList && methodItems.length > 0 && !methodList.dataset.initialized) {
+  // Ne s'exécute que sur desktop (992px et plus)
+  const isDesktop = window.innerWidth >= 992;
+
+  if (methodList && methodItems.length > 0 && !methodList.dataset.initialized && isDesktop) {
     methodList.dataset.initialized = 'true';
 
-    // 1. Tous cachés au départ sauf le premier
+    // 1. Tous cachés au départ
     gsap.set(methodItems, { opacity: 0 });
-    gsap.set(methodItems[0], { opacity: 1 });
 
     // Variable pour tracker l'étape précédente
-    let previousActiveIndex = 0;
+    let previousActiveIndex = -1;
 
     // 2. Animation optimisée pour position sticky
     ScrollTrigger.create({
