@@ -25,5 +25,5 @@ typings/
 .env
 
 # Production files
-dist
+# dist - Commented out to allow JSDelivr to serve files from GitHub
 
