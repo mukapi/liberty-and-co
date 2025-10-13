@@ -134,6 +134,7 @@ export function initScrollAnimations() {
     let previousActiveIndex = -1;
 
     // 2. Animation optimisée pour position sticky
+    // Note: Le changement d'item se fait quand les 2 lignes de l'item précédent sont à 100%
     ScrollTrigger.create({
       trigger: methodList,
       start: 'top center',
@@ -143,7 +144,8 @@ export function initScrollAnimations() {
         const { progress } = self; // 0 à 1
         const totalItems = methodItems.length;
 
-        // Calcul plus précis avec segments
+        // Calcul de l'item actif
+        // On change d'item au début de chaque segment (quand les 2 lignes sont complètes)
         const segmentSize = 1 / totalItems;
         const currentSegment = Math.floor(progress / segmentSize);
         const activeIndex = Math.min(currentSegment, totalItems - 1);
@@ -194,6 +196,103 @@ export function initScrollAnimations() {
     });
   } else if (!methodList) {
     console.error('❌ No method_list element found');
+  }
+
+  // --- Animation method_line (lignes qui grandissent 1 par 1) ---
+  // Note: Chaque method_item contient 2 method_line
+  if (methodList && methodItems.length > 0 && isDesktop) {
+    // Récupérer toutes les lignes groupées par item
+    const linesByItem: HTMLElement[][] = [];
+    methodItems.forEach((item) => {
+      const lines = Array.from(item.querySelectorAll<HTMLElement>('.method_line'));
+      if (lines.length > 0) {
+        linesByItem.push(lines);
+      }
+    });
+
+    // Vérifier qu'on a bien des lignes
+    if (linesByItem.length > 0) {
+      // 1. Initialiser toutes les lignes à 0% de hauteur
+      linesByItem.forEach((lines) => {
+        gsap.set(lines, { height: '0%' });
+      });
+
+      // 2. Animation synchronisée avec le scroll
+      ScrollTrigger.create({
+        trigger: methodList,
+        start: 'top center',
+        end: 'bottom center',
+        scrub: 0.1,
+        onUpdate: (self) => {
+          const { progress } = self; // 0 à 1
+          const totalItems = methodItems.length;
+
+          // Calcul de l'item actif et de la progression à l'intérieur
+          const segmentSize = 1 / totalItems;
+          const currentSegment = Math.floor(progress / segmentSize);
+          const activeItemIndex = Math.min(currentSegment, totalItems - 1);
+          const progressInItem = (progress - activeItemIndex * segmentSize) / segmentSize;
+
+          // Pour chaque item
+          linesByItem.forEach((lines, itemIndex) => {
+            if (itemIndex < activeItemIndex) {
+              // Items complétés : toutes les lignes à 100%
+              lines.forEach((line) => {
+                gsap.to(line, {
+                  height: '100%',
+                  duration: 0.3,
+                  ease: 'power1.out',
+                  overwrite: 'auto',
+                });
+              });
+            } else if (itemIndex === activeItemIndex) {
+              // Item actif : animer les lignes selon la progression
+              const totalLinesInItem = lines.length;
+
+              lines.forEach((line, lineIndex) => {
+                // Calculer la progression pour cette ligne
+                const lineSegment = 1 / totalLinesInItem;
+                const lineStart = lineIndex * lineSegment;
+                const lineEnd = (lineIndex + 1) * lineSegment;
+
+                if (progressInItem <= lineStart) {
+                  // Ligne pas encore commencée
+                  gsap.set(line, { height: '0%' });
+                } else if (progressInItem >= lineEnd) {
+                  // Ligne complétée
+                  gsap.to(line, {
+                    height: '100%',
+                    duration: 0.3,
+                    ease: 'power1.out',
+                    overwrite: 'auto',
+                  });
+                } else {
+                  // Ligne en cours d'animation
+                  const progressInLine = (progressInItem - lineStart) / lineSegment;
+                  const lineHeight = Math.min(progressInLine * 100, 100);
+
+                  gsap.to(line, {
+                    height: `${lineHeight}%`,
+                    duration: 0.1,
+                    ease: 'none',
+                    overwrite: 'auto',
+                  });
+                }
+              });
+            } else {
+              // Items futurs : lignes à 0%
+              lines.forEach((line) => {
+                gsap.set(line, { height: '0%' });
+              });
+            }
+          });
+        },
+        // Décommente pour debug
+        // markers: true,
+      });
+
+      console.log(`✅ Method lines animation initialized (${linesByItem.length} items)`);
+    }
   }
 }
 
