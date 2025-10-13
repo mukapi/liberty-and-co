@@ -5,10 +5,9 @@ declare const gsap: typeof import('gsap').gsap;
  * Initialise toutes les animations au scroll
  * Note: GSAP et ScrollTrigger sont déjà chargés nativement par Webflow
  */
-// Protection globale contre le double chargement
-let isInitialized = false;
 
-export const initScrollAnimations = () => {
+// Fonction principale d'initialisation
+export function initScrollAnimations() {
   // Vérifier que GSAP est bien disponible
   if (typeof gsap === 'undefined') {
     console.error('❌ GSAP not found - make sure you are running on Webflow');
