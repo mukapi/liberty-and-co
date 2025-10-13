@@ -106,6 +106,52 @@ export const initScrollAnimations = () => {
     });
   });
 
+  // --- Animation method_item (un à la fois) ---
+  const methodList = document.querySelector<HTMLElement>('.method_list');
+  const methodItems = gsap.utils.toArray<HTMLElement>('.method_item');
+
+  if (methodList && methodItems.length > 0) {
+    console.log(`🎯 Found ${methodItems.length} method items`);
+
+    // 1. Initialiser l'opacité : le premier item est visible, les autres sont cachés
+    gsap.set(methodItems, { opacity: 0 });
+    gsap.set(methodItems[0], { opacity: 1 });
+
+    // 2. Créer une timeline GSAP qui sera contrôlée par le scroll
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: methodList,
+        start: 'top top', // Déclenche quand le haut de method_list atteint le haut du viewport
+        end: 'bottom top', // Finit quand le bas de method_list atteint le haut du viewport
+        scrub: true, // L'animation est liée au scroll
+        markers: true, // Décommente pour le débogage
+      },
+    });
+
+    // 3. Créer les transitions entre chaque item
+    methodItems.forEach((item, i) => {
+      if (i === 0) {
+        // Premier item : visible au début, puis s'estompe
+        tl.to(item, { opacity: 0, duration: 0.3 }, 0.2);
+      } else if (i < methodItems.length - 1) {
+        // Items intermédiaires : apparaissent puis disparaissent
+        tl.fromTo(
+          item,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.3 },
+          i * 0.25 // Commence à apparaître à 25% de la timeline par item
+        ).to(
+          item,
+          { opacity: 0, duration: 0.3 },
+          (i + 1) * 0.25 - 0.1 // Commence à disparaître juste avant l'item suivant
+        );
+      } else {
+        // Dernier item : apparaît et reste visible
+        tl.fromTo(item, { opacity: 0 }, { opacity: 1, duration: 0.3 }, i * 0.25);
+      }
+    });
+  }
+
   console.log('✅ GSAP ScrollTrigger animations initialized');
 };
 
@@ -115,4 +161,3 @@ export const initScrollAnimations = () => {
 export const refreshScrollTrigger = () => {
   ScrollTrigger.refresh();
 };
-
