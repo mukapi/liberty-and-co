@@ -5,4 +5,3 @@ window.Webflow.push(() => {
   const name = 'Liberty & Co';
   greetUser(name);
 });
-
