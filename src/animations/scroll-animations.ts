@@ -5,12 +5,22 @@ declare const gsap: typeof import('gsap').gsap;
  * Initialise toutes les animations au scroll
  * Note: GSAP et ScrollTrigger sont déjà chargés nativement par Webflow
  */
+// Protection globale contre le double chargement
+let isInitialized = false;
+
 export const initScrollAnimations = () => {
   // Vérifier que GSAP est bien disponible
   if (typeof gsap === 'undefined') {
     console.error('❌ GSAP not found - make sure you are running on Webflow');
     return;
   }
+
+  // Protection contre le double chargement
+  if (isInitialized) {
+    console.log('⚠️ Scroll animations already initialized, skipping...');
+    return;
+  }
+  isInitialized = true;
   // Animation fade-in depuis le bas
   gsap.utils.toArray<HTMLElement>('[data-animate="fade-up"]').forEach((element) => {
     gsap.from(element, {
@@ -106,50 +116,60 @@ export const initScrollAnimations = () => {
     });
   });
 
-  // --- Animation method_item (un à la fois) ---
+  // --- Animation method_item (snap points discrets) ---
   const methodList = document.querySelector<HTMLElement>('.method_list');
   const methodItems = gsap.utils.toArray<HTMLElement>('.method_item');
 
-  if (methodList && methodItems.length > 0) {
+  // Protection contre le double chargement
+  if (methodList && methodItems.length > 0 && !methodList.dataset.initialized) {
+    methodList.dataset.initialized = 'true';
     console.log(`🎯 Found ${methodItems.length} method items`);
+    console.log('🔍 Method list element:', methodList);
+    console.log('🔍 Method items:', methodItems);
 
-    // 1. Initialiser l'opacité : le premier item est visible, les autres sont cachés
+    // 1. Initialiser : tous les items cachés sauf le premier
     gsap.set(methodItems, { opacity: 0 });
     gsap.set(methodItems[0], { opacity: 1 });
+    console.log('✅ Initial setup: Item 1 visible, others hidden');
 
-    // 2. Créer une timeline GSAP qui sera contrôlée par le scroll
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: methodList,
-        start: 'top top', // Déclenche quand le haut de method_list atteint le haut du viewport
-        end: 'bottom top', // Finit quand le bas de method_list atteint le haut du viewport
-        scrub: true, // L'animation est liée au scroll
-        markers: true, // Décommente pour le débogage
-      },
-    });
-
-    // 3. Créer les transitions entre chaque item
+    // 2. Créer des snap points discrets (pas de transitions fluides)
     methodItems.forEach((item, i) => {
-      if (i === 0) {
-        // Premier item : visible au début, puis s'estompe
-        tl.to(item, { opacity: 0, duration: 0.3 }, 0.2);
-      } else if (i < methodItems.length - 1) {
-        // Items intermédiaires : apparaissent puis disparaissent
-        tl.fromTo(
-          item,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.3 },
-          i * 0.25 // Commence à apparaître à 25% de la timeline par item
-        ).to(
-          item,
-          { opacity: 0, duration: 0.3 },
-          (i + 1) * 0.25 - 0.1 // Commence à disparaître juste avant l'item suivant
-        );
-      } else {
-        // Dernier item : apparaît et reste visible
-        tl.fromTo(item, { opacity: 0 }, { opacity: 1, duration: 0.3 }, i * 0.25);
-      }
+      console.log(`🔧 Creating ScrollTrigger for item ${i + 1}`);
+
+      // Créer un ScrollTrigger pour chaque item avec des zones fixes
+      ScrollTrigger.create({
+        trigger: methodList,
+        start: `top ${i * 25}%`, // Zone fixe pour chaque item
+        end: `top ${(i + 1) * 25}%`, // Zone fixe pour chaque item
+        onEnter: () => {
+          console.log(`🚀 ENTERING item ${i + 1} zone (${i * 25}% to ${(i + 1) * 25}%)`);
+          console.log('🔍 Current scroll position:', window.scrollY);
+          console.log('🔍 Method list position:', methodList.getBoundingClientRect().top);
+
+          // Quand on entre dans cette zone : montrer cet item, cacher les autres
+          gsap.set(methodItems, { opacity: 0 }); // Cacher tous
+          gsap.set(item, { opacity: 1 }); // Montrer celui-ci
+
+          console.log(`📌 Snap to item ${i + 1}`);
+        },
+        onEnterBack: () => {
+          console.log(`🔄 ENTERING BACK item ${i + 1} zone`);
+
+          // Même chose quand on revient en arrière
+          gsap.set(methodItems, { opacity: 0 });
+          gsap.set(item, { opacity: 1 });
+
+          console.log(`📌 Snap back to item ${i + 1}`);
+        },
+        markers: false, // Désactivé pour éviter la confusion
+      });
     });
+  } else {
+    console.log('❌ No method_list or method_items found');
+    console.log(
+      '🔍 Available elements with "method" in class:',
+      document.querySelectorAll('[class*="method"]')
+    );
   }
 
   console.log('✅ GSAP ScrollTrigger animations initialized');
