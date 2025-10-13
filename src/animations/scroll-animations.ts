@@ -127,11 +127,14 @@ export function initScrollAnimations() {
   if (methodList && methodItems.length > 0 && !methodList.dataset.initialized && isDesktop) {
     methodList.dataset.initialized = 'true';
 
-    // 1. Tous cachés au départ
+    // 1. Tous cachés au départ, SAUF le premier
     gsap.set(methodItems, { opacity: 0 });
+    if (methodItems[0]) {
+      gsap.set(methodItems[0], { opacity: 1, visibility: 'visible' });
+    }
 
-    // Variable pour tracker l'étape précédente
-    let previousActiveIndex = -1;
+    // Variable pour tracker l'étape précédente (commence à 0 car le premier est déjà visible)
+    let previousActiveIndex = 0;
 
     // 2. Animation optimisée pour position sticky
     // Note: Le changement d'item se fait quand les 2 lignes de l'item précédent sont à 100%
