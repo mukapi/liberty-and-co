@@ -7,4 +7,3 @@ window.Webflow.push(() => {
 
   console.log('🎨 Liberty & Co - Scroll animations loaded');
 });
-
