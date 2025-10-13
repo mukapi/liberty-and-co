@@ -198,13 +198,13 @@ export function initScrollAnimations() {
     console.error('❌ No method_list element found');
   }
 
-  // --- Animation method_line (lignes qui grandissent 1 par 1) ---
-  // Note: Chaque method_item contient 2 method_line
+  // --- Animation method_line_inner (lignes qui grandissent 1 par 1) ---
+  // Note: Chaque method_item contient 2 method_line, chacune avec un method_line_inner
   if (methodList && methodItems.length > 0 && isDesktop) {
-    // Récupérer toutes les lignes groupées par item
+    // Récupérer toutes les lignes inner groupées par item
     const linesByItem: HTMLElement[][] = [];
     methodItems.forEach((item) => {
-      const lines = Array.from(item.querySelectorAll<HTMLElement>('.method_line'));
+      const lines = Array.from(item.querySelectorAll<HTMLElement>('.method_line_inner'));
       if (lines.length > 0) {
         linesByItem.push(lines);
       }
