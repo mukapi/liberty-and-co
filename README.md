@@ -1,82 +1,73 @@
-# Liberty & Co - Webflow Development
+# Liberty & Co
 
-Starter template basé sur [Finsweet Developer Starter](https://github.com/finsweet/developer-starter).
+Site vitrine avec animations GSAP pour Webflow.
 
-## 🚀 Installation
-
-```bash
-pnpm install
-```
-
-## 💻 Développement
-
-```bash
-# Lance le dev server sur http://localhost:3000
-pnpm dev
-```
-
-Ensuite, dans Webflow, ajoute ce script dans les paramètres du site :
-
-```html
-<script defer src="http://localhost:3000/index.js"></script>
-```
-
-Le live reload est activé par défaut - chaque fois que tu sauvegardes un fichier, le site se recharge automatiquement.
-
-## 📦 Build Production
-
-```bash
-pnpm build
-```
-
-Les fichiers buildés seront dans le dossier `dist/`.
+**Ultra-simple : un seul fichier JavaScript, zéro dépendance npm.**
 
 ## 📂 Structure
 
 ```
 liberty-and-co/
-├── src/
-│   ├── index.ts          # Point d'entrée principal
-│   └── utils/
-│       └── greet.ts      # Fonctions utilitaires
-├── bin/
-│   ├── build.js          # Configuration esbuild
-│   └── live-reload.js    # Script de live reload
-├── dist/                 # Fichiers buildés (généré)
-└── package.json
+└── index.js          # Toutes les animations GSAP
 ```
 
-## 🔧 Scripts disponibles
+## 🚀 Utilisation dans Webflow
 
-- `pnpm dev` - Lance le serveur de développement
-- `pnpm build` - Build pour la production
-- `pnpm lint` - Vérifie le code avec ESLint et Prettier
-- `pnpm lint:fix` - Corrige automatiquement les problèmes
-- `pnpm check` - Vérifie les erreurs TypeScript
-- `pnpm format` - Formate le code avec Prettier
+Dans les paramètres de ton site Webflow, ajoute ce script dans la section **Custom Code** (avant `</body>`) :
 
-## 📝 Pattern Webflow
+### Option 1 : Depuis GitHub Pages
 
-Le code utilise le pattern officiel Webflow pour l'initialisation :
+```html
+<script defer src="https://TON-USERNAME.github.io/liberty-and-co/index.js"></script>
+```
 
-```typescript
+### Option 2 : Upload direct dans Webflow
+
+1. Va dans **Settings → Custom Code**
+2. Upload le fichier `index.js`
+3. Ajoute le script :
+
+```html
+<script defer src="/index.js"></script>
+```
+
+## 🎨 Animations disponibles
+
+Toutes les animations utilisent GSAP et ScrollTrigger (déjà inclus dans Webflow).
+
+### Attributs data à ajouter sur tes éléments :
+
+- **`data-animate="fade-up"`** - Fade in depuis le bas
+- **`data-animate="fade-left"`** - Fade in depuis la gauche
+- **`data-animate="fade-right"`** - Fade in depuis la droite
+- **`data-animate="scale"`** - Scale + fade in
+- **`data-animate-stagger`** - Container pour animation décalée
+  - Ajoute `data-animate-item` sur chaque enfant
+- **`data-parallax`** - Effet parallax
+  - Ajoute `data-parallax-speed="0.5"` pour ajuster la vitesse
+
+### Animation méthode (sections qui apparaissent 1 par 1)
+
+Classes à utiliser dans Webflow :
+- **`.method_list`** - Container principal (doit avoir position: sticky)
+- **`.method_item`** - Chaque étape
+- **`.method_line_inner`** - Lignes animées qui grandissent
+
+**Note** : Cette animation fonctionne uniquement sur desktop (992px et plus).
+
+## 📝 Comment ça marche ?
+
+Le code utilise le pattern officiel Webflow pour s'assurer que les animations se chargent après l'initialisation de GSAP :
+
+```javascript
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  // Ton code ici
+  // Animations initialisées ici
 });
 ```
 
-Cela garantit que ton code s'exécute après l'initialisation complète de Webflow.
+## 🛠️ Technologies
 
-## 🎯 Ajouter des fichiers multiples
-
-Pour builder plusieurs fichiers, édite `bin/build.js` :
-
-```javascript
-const ENTRY_POINTS = [
-  'src/index.ts',      // Global
-  'src/home.ts',       // Page Home
-  'src/contact.ts',    // Page Contact
-];
-```
-
+- JavaScript vanilla (ES6)
+- GSAP + ScrollTrigger (fourni par Webflow)
+- Aucune dépendance npm
